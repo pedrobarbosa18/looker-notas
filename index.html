@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bloco de Notas</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F6F2;
+    --surface: #FFFFFF;
+    --surface2: #F0EEE9;
+    --border: #E2DFD8;
+    --text: #1A1916;
+    --muted: #7A7770;
+    --accent: #2A5CFF;
+    --accent-bg: #EEF2FF;
+    --danger: #C0392B;
+    --danger-bg: #FDF0EF;
+    --green: #1a7f4b;
+    --green-bg: #edfaf3;
+    --radius: 10px;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .header-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .header-icon svg { fill: #fff; width: 16px; height: 16px; }
+
+  .header h1 { font-size: 15px; font-weight: 600; }
+  .header span { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+  .config-banner {
+    background: #fffbeb;
+    border: 1px solid #f6d860;
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #7a5c00;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .config-banner b { font-weight: 600; }
+  .config-banner input {
+    margin-top: 8px;
+    width: 100%;
+    font-family: var(--mono);
+    font-size: 12px;
+    background: #fffef5;
+    border: 1px solid #e8d080;
+    border-radius: 6px;
+    padding: 7px 10px;
+    color: #5a4500;
+    outline: none;
+  }
+  .config-banner input:focus { border-color: #c8a800; }
+
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .form-row { display: flex; gap: 8px; margin-bottom: 10px; }
+
+  input[type="text"], textarea {
+    font-family: var(--font);
+    font-size: 13px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 9px 12px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+
+  input[type="text"]:focus, textarea:focus {
+    border-color: var(--accent);
+    background: #fff;
+  }
+
+  input[type="text"]::placeholder, textarea::placeholder { color: var(--muted); }
+  .input-name { max-width: 170px; flex-shrink: 0; }
+
+  textarea { resize: vertical; min-height: 72px; display: block; margin-bottom: 10px; }
+
+  .form-footer { display: flex; align-items: center; justify-content: space-between; }
+
+  .btn-add {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    padding: 9px 18px;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-add:hover { opacity: 0.88; }
+  .btn-add:active { transform: scale(0.98); }
+  .btn-add:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .spinner {
+    width: 13px; height: 13px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .status-msg {
+    font-size: 12px;
+    color: var(--accent);
+    font-family: var(--mono);
+    min-height: 16px;
+  }
+
+  .notes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .notes-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .right-actions { display: flex; align-items: center; gap: 8px; }
+
+  .count-badge {
+    font-size: 11px;
+    font-family: var(--mono);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 9px;
+    color: var(--muted);
+  }
+
+  .btn-refresh {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .btn-refresh:hover { background: var(--surface2); }
+
+  .filter-row { margin-bottom: 10px; }
+
+  .notes-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .note-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 13px 15px;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .note-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 7px;
+  }
+
+  .note-author {
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .avatar {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .note-meta { display: flex; align-items: center; gap: 8px; }
+
+  .note-date {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+  }
+
+  .btn-del {
+    font-size: 11px;
+    font-family: var(--font);
+    color: var(--danger);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+  }
+  .btn-del:hover { background: var(--danger-bg); border-color: #f5c0bc; }
+
+  .note-text {
+    font-size: 13.5px;
+    color: #3A3835;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .sheet-link {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--green);
+    background: var(--green-bg);
+    border: 1px solid #b2e8ce;
+    border-radius: 6px;
+    padding: 2px 8px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .sheet-link:hover { opacity: 0.8; }
+
+  .empty {
+    text-align: center;
+    padding: 36px 0;
+    color: var(--muted);
+    font-size: 13px;
+    font-family: var(--mono);
+  }
+  .empty span { display: block; font-size: 22px; margin-bottom: 8px; }
+
+  .loading-row {
+    text-align: center;
+    padding: 24px 0;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 3a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm5 12H7v-1.5h10V18zm0-3H7v-1.5h10V15zm0-3H7v-1.5h10V12z"/>
+    </svg>
+  </div>
+  <div>
+    <h1>Bloco de notas</h1>
+    <span id="sheetStatus">Configure a URL do Apps Script abaixo</span>
+  </div>
+</div>
+
+<!-- Banner de configuração — some após salvar a URL -->
+<div class="config-banner" id="configBanner">
+  <div style="flex:1">
+    <b>Configure a integração com o Google Sheets</b><br/>
+    Cole abaixo a URL do seu Apps Script (Web App) e pressione Enter.<br/>
+    A URL fica salva no navegador.
+    <input type="text" id="apiUrlInput"
+      placeholder="https://script.google.com/macros/s/SEU_ID/exec"
+      onkeydown="if(event.key==='Enter') saveUrl()" />
+  </div>
+</div>
+
+<div class="form-card">
+  <div class="form-row">
+    <input class="input-name" type="text" id="author" placeholder="Seu nome" maxlength="40" />
+    <input type="text" id="noteShort" placeholder="Anotação rápida… (Enter para salvar)" maxlength="300" />
+  </div>
+  <textarea id="noteLong" placeholder="Ou escreva uma anotação mais detalhada aqui…" maxlength="2000"></textarea>
+  <div class="form-footer">
+    <button class="btn-add" onclick="addNote()" id="btnAdd">
+      <div class="spinner" id="spinner"></div>
+      + Adicionar nota
+    </button>
+    <span class="status-msg" id="status"></span>
+  </div>
+</div>
+
+<div class="notes-header">
+  <span class="notes-label">Anotações</span>
+  <div class="right-actions">
+    <a id="sheetLink" class="sheet-link" href="#" target="_blank" style="display:none">
+      ↗ Ver planilha
+    </a>
+    <span class="count-badge" id="countBadge">0</span>
+    <button class="btn-refresh" onclick="fetchNotes()">↻ atualizar</button>
+  </div>
+</div>
+
+<div class="filter-row">
+  <input type="text" id="filterInput" placeholder="Filtrar por autor ou texto…" oninput="renderNotes()" />
+</div>
+
+<div class="notes-list" id="notesList">
+  <div class="loading-row">aguardando configuração…</div>
+</div>
+
+<script>
+  // ──────────────────────────────────────────────
+  //  CONFIGURAÇÃO
+  //  Se preferir fixar a URL diretamente no código,
+  //  substitua "" pela URL do seu Apps Script:
+  //  const FIXED_API = "https://script.google.com/...";
+  // ──────────────────────────────────────────────
+  const FIXED_API = "https://script.google.com/macros/s/AKfycbxLnJ1XQepT8g1q75OY-zUmhifrfqN3cd0bHYz0V7svNKjVgAfFTYzm2H0oncQpKnjQ/exec";
+  const LS_URL_KEY = "looker_notes_api_url";
+  const LS_AUTHOR_KEY = "looker_notes_author";
+
+  let API_URL = FIXED_API || localStorage.getItem(LS_URL_KEY) || "";
+  let notes = [];
+
+  function saveUrl() {
+    const val = document.getElementById("apiUrlInput").value.trim();
+    if (!val.startsWith("https://script.google.com")) {
+      setStatus("⚠ URL inválida. Deve começar com https://script.google.com");
+      return;
+    }
+    API_URL = val;
+    localStorage.setItem(LS_URL_KEY, val);
+    document.getElementById("configBanner").style.display = "none";
+    document.getElementById("sheetStatus").textContent = "Conectado ao Google Sheets";
+    fetchNotes();
+  }
+
+  function getSheetId() {
+    // tenta extrair o ID da spreadsheet do localStorage (salvo opcionalmente)
+    return localStorage.getItem("looker_sheet_id") || "";
+  }
+
+  function init() {
+    // Restaura nome do autor
+    const savedAuthor = localStorage.getItem(LS_AUTHOR_KEY);
+    if (savedAuthor) document.getElementById("author").value = savedAuthor;
+
+    document.getElementById("author").addEventListener("change", () => {
+      localStorage.setItem(LS_AUTHOR_KEY, document.getElementById("author").value.trim());
+    });
+
+    if (FIXED_API) {
+      document.getElementById("configBanner").style.display = "none";
+      document.getElementById("sheetStatus").textContent = "Conectado ao Google Sheets";
+    } else if (API_URL) {
+      document.getElementById("apiUrlInput").value = API_URL;
+      document.getElementById("configBanner").style.display = "none";
+      document.getElementById("sheetStatus").textContent = "Conectado ao Google Sheets";
+    }
+
+    if (API_URL) fetchNotes();
+  }
+
+  async function fetchNotes() {
+    if (!API_URL) return;
+    document.getElementById("notesList").innerHTML = '<div class="loading-row">carregando…</div>';
+    try {
+      const res = await fetch(`${API_URL}?action=list`, { redirect: "follow" });
+      const data = await res.json();
+      notes = Array.isArray(data) ? data : [];
+      renderNotes();
+    } catch (e) {
+      document.getElementById("notesList").innerHTML =
+        '<div class="empty"><span>⚠</span>Erro ao carregar. Verifique a URL do Apps Script.</div>';
+    }
+  }
+
+  function renderNotes() {
+    const filter = document.getElementById("filterInput").value.toLowerCase();
+    const list = document.getElementById("notesList");
+    const badge = document.getElementById("countBadge");
+
+    badge.textContent = notes.length;
+
+    let filtered = notes.slice().reverse();
+    if (filter) {
+      filtered = filtered.filter(n =>
+        n.author.toLowerCase().includes(filter) || n.text.toLowerCase().includes(filter)
+      );
+    }
+
+    if (!filtered.length) {
+      list.innerHTML = notes.length === 0
+        ? '<div class="empty"><span>📋</span>Nenhuma anotação ainda. Seja o primeiro!</div>'
+        : '<div class="empty"><span>🔍</span>Nenhuma nota encontrada.</div>';
+      return;
+    }
+
+    list.innerHTML = filtered.map(n => `
+      <div class="note-card">
+        <div class="note-top">
+          <div class="note-author">
+            <div class="avatar">${esc(initials(n.author))}</div>
+            ${esc(n.author)}
+          </div>
+          <div class="note-meta">
+            <span class="note-date">${esc(n.ts)}</span>
+            <button class="btn-del" onclick="deleteNote('${esc(n.id)}')">excluir</button>
+          </div>
+        </div>
+        <div class="note-text">${esc(n.text)}</div>
+      </div>
+    `).join("");
+  }
+
+  async function addNote() {
+    const author = document.getElementById("author").value.trim();
+    const short  = document.getElementById("noteShort").value.trim();
+    const long   = document.getElementById("noteLong").value.trim();
+    const text   = long || short;
+
+    if (!API_URL) { setStatus("⚠ Configure a URL do Apps Script primeiro."); return; }
+    if (!author)  { setStatus("⚠ Informe seu nome."); return; }
+    if (!text)    { setStatus("⚠ Escreva uma anotação."); return; }
+
+    setLoading(true);
+    try {
+      await fetch(`${API_URL}?action=add&author=${encodeURIComponent(author)}&text=${encodeURIComponent(text)}`, { redirect: "follow" });
+      document.getElementById("noteShort").value = "";
+      document.getElementById("noteLong").value  = "";
+      setStatus("✓ Nota salva na planilha!");
+      setTimeout(() => setStatus(""), 2500);
+      localStorage.setItem(LS_AUTHOR_KEY, author);
+      await fetchNotes();
+    } catch (e) {
+      setStatus("⚠ Erro ao salvar. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deleteNote(id) {
+    if (!confirm("Excluir esta nota da planilha?")) return;
+    try {
+      await fetch(`${API_URL}?action=delete&id=${encodeURIComponent(id)}`, { redirect: "follow" });
+      await fetchNotes();
+    } catch (e) {
+      setStatus("⚠ Erro ao excluir.");
+    }
+  }
+
+  function setLoading(on) {
+    document.getElementById("spinner").style.display = on ? "block" : "none";
+    document.getElementById("btnAdd").disabled = on;
+  }
+
+  function setStatus(msg) {
+    document.getElementById("status").textContent = msg;
+  }
+
+  function initials(name) {
+    return String(name).split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2);
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;");
+  }
+
+  document.getElementById("noteShort").addEventListener("keydown", e => {
+    if (e.key === "Enter") addNote();
+  });
+
+  // Atualiza a cada 60 segundos automaticamente
+  setInterval(() => { if (API_URL) fetchNotes(); }, 60000);
+
+  init();
+</script>
+</body>
+</html>
